@@ -36,7 +36,7 @@ This list is used temporarily to track changes made across the organization repo
 
 ### ros2neuro_decoder
 
-- _No entries yet._
+- 2026-05-05: Updated `NeuroPrediction` consumers and documentation to use `decoder`, `fields`, `values`, and `type` instead of the previous hard-classification-oriented fields.
 
 ### ros2neuro_decoder_converters
 
@@ -44,7 +44,7 @@ This list is used temporarily to track changes made across the organization repo
 
 ### ros2neuro_decoder_gaussian
 
-- _No entries yet._
+- 2026-05-05: Updated Gaussian decoder prediction publishing and tests for the new generic `NeuroPrediction` message contract.
 
 ### ros2neuro_decoder_lda
 
@@ -52,11 +52,11 @@ This list is used temporarily to track changes made across the organization repo
 
 ### ros2neuro_decoder_qda
 
-- _No entries yet._
+- 2026-05-05: Updated QDA decoder prediction publishing and tests for the new generic `NeuroPrediction` message contract.
 
 ### ros2neuro_decoder_svm
 
-- _No entries yet._
+- 2026-05-05: Updated SVM decoder prediction publishing and tests for the new generic `NeuroPrediction` message contract.
 
 ### ros2neuro_devel_test
 
@@ -100,15 +100,15 @@ This list is used temporarily to track changes made across the organization repo
 
 ### ros2neuro_integrator
 
-- _No entries yet._
+- 2026-05-05: Updated integrator consumers to read `NeuroPrediction.fields` and `NeuroPrediction.values`, deriving decisions from integrated values instead of decoder hard predictions.
 
 ### ros2neuro_integrator_exponential
 
-- _No entries yet._
+- 2026-05-05: Updated exponential integrator to consume `NeuroPrediction.values` and `NeuroPrediction.type`.
 
 ### ros2neuro_msgs
 
-- _No entries yet._
+- 2026-05-05: Simplified `NeuroPrediction` to generic decoder output fields: `decoder`, `fields`, `values`, and `type`; removed hard classification index and added `TYPE_REGRESSION`.
 
 ### ros2neuro_processing_spectral
 
