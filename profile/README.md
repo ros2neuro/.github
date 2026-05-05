@@ -28,7 +28,7 @@ This list is used temporarily to track changes made across the organization repo
 
 ### ros2neuro_acquisition_xdf
 
-- _No entries yet._
+- 2026-05-05: Added optional XDF sensor/trigger group overrides for name, unit, labels, type, and value ranges via name-based or index-based parameters.
 
 ### ros2neuro_data
 
@@ -60,7 +60,7 @@ This list is used temporarily to track changes made across the organization repo
 
 ### ros2neuro_devel_test
 
-- _No entries yet._
+- 2026-05-05: Updated MI loop remapping from the integrator decision topic to the new control topic.
 
 ### ros2neuro_filters
 
@@ -101,14 +101,17 @@ This list is used temporarily to track changes made across the organization repo
 ### ros2neuro_integrator
 
 - 2026-05-05: Updated integrator consumers to read `NeuroPrediction.fields` and `NeuroPrediction.values`, deriving decisions from integrated values instead of decoder hard predictions.
+- 2026-05-05: Renamed integrator output from `NeuroDecision` to `NeuroControl`, publishing continuous `fields`/`values` and discrete `actions`/`commands`.
 
 ### ros2neuro_integrator_exponential
 
 - 2026-05-05: Updated exponential integrator to consume `NeuroPrediction.values` and `NeuroPrediction.type`.
+- 2026-05-05: Updated documentation and default output topic for the new `NeuroControl` message.
 
 ### ros2neuro_msgs
 
 - 2026-05-05: Simplified `NeuroPrediction` to generic decoder output fields: `decoder`, `fields`, `values`, and `type`; removed hard classification index and added `TYPE_REGRESSION`.
+- 2026-05-05: Replaced `NeuroDecision` with `NeuroControl` for processed decoder output used as continuous/discrete control signals.
 
 ### ros2neuro_processing_spectral
 
