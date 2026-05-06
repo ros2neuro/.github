@@ -24,3 +24,4 @@ This list is used temporarily to track changes made across the organization repo
 - 2026-05-05 [ltonin] **ros2neuro_training_qt**: Replaced the painted channel view with a `QOpenGLWidget` procedural 3D head model and electrode spheres.
 - 2026-05-05 [ltonin] **ros2neuro_training_qt**: Added runtime OBJ head mesh loading from `assets/head.obj`, with procedural fallback when no external model is installed.
 - 2026-05-06 [ltonin] **ros2neuro_acquisition_gusbamp**: Updated g.USBamp reads for the new `libgusbampapi` byte-based `GT_GetSamplesAvailable`/`GT_GetData` contract and kept the C API private to the plugin implementation.
+- 2026-05-06 [ltonin] **ros2neuro_acquisition_eegdev**: Hardened libeegdev discovery against stale CMake cache paths and kept libeegdev/dl link details out of the exported plugin interface.
