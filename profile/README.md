@@ -6,6 +6,10 @@ This organization hosts the ROS 2 packages for the ros2neuro ecosystem.
 
 This list is used temporarily to track changes made across the organization repositories.
 
+- 2026-05-11 [ltonin] **ros2neuro_visualizer**: Fixed the time-scope window duration so the selected seconds match the displayed cursor period, while preserving the circular cursor behavior and retaining late samples when incoming chunks exceed the selected window.
+- 2026-05-06 [ltonin] **ros2neuro_acquisition_gusbamp**: Updated g.USBamp reads for the new `libgusbampapi` byte-based `GT_GetSamplesAvailable`/`GT_GetData` contract and kept the C API private to the plugin implementation.
+- 2026-05-06 [ltonin] **ros2neuro_acquisition_eegdev**: Hardened libeegdev discovery against stale CMake cache paths and kept libeegdev/dl link details out of the exported plugin interface.
+- 2026-05-06 [ltonin] **ros2neuro_training_qt**: Added channel management inside the Channel layout view with editable labels, g.USBamp motor imagery presets, reset controls, channel-count summary, disabled-channel rendering, row-level compatibility coloring/tooltips, and propagation of active labels into the training config.
 - 2026-05-05 [ltonin] **ros2neuro_msgs**: Simplified `NeuroPrediction` to generic decoder output fields: `decoder`, `fields`, `values`, and `type`; removed hard classification index and added `TYPE_REGRESSION`.
 - 2026-05-05 [ltonin] **ros2neuro_decoder**, **ros2neuro_decoder_lda**, **ros2neuro_decoder_svm**, **ros2neuro_decoder_qda**, **ros2neuro_decoder_gaussian**, **ros2neuro_integrator**, **ros2neuro_integrator_exponential**: Updated `NeuroPrediction` producers and consumers for the new generic message contract.
 - 2026-05-05 [ltonin] **ros2neuro_decoder**, **ros2neuro_decoder_converters**, **ros2neuro_devel_test**: Updated decoder manifests to use `input` for the incoming `NeuroFeature` contract, `features` for the model feature set, and `output.fields` for prediction fields.
@@ -23,5 +27,3 @@ This list is used temporarily to track changes made across the organization repo
 - 2026-05-05 [ltonin] **ros2neuro_training_qt**: Changed the channel view default to an isometric head silhouette with ears, neck, and face ridge.
 - 2026-05-05 [ltonin] **ros2neuro_training_qt**: Replaced the painted channel view with a `QOpenGLWidget` procedural 3D head model and electrode spheres.
 - 2026-05-05 [ltonin] **ros2neuro_training_qt**: Added runtime OBJ head mesh loading from `assets/head.obj`, with procedural fallback when no external model is installed.
-- 2026-05-06 [ltonin] **ros2neuro_acquisition_gusbamp**: Updated g.USBamp reads for the new `libgusbampapi` byte-based `GT_GetSamplesAvailable`/`GT_GetData` contract and kept the C API private to the plugin implementation.
-- 2026-05-06 [ltonin] **ros2neuro_acquisition_eegdev**: Hardened libeegdev discovery against stale CMake cache paths and kept libeegdev/dl link details out of the exported plugin interface.
