@@ -6,7 +6,7 @@ This organization hosts the ROS 2 packages for the ros2neuro ecosystem.
 
 This list is used temporarily to track changes made across the organization repositories.
 
-- 2026-05-11 [ltonin] **ros2neuro_visualizer**: Fixed the time-scope window duration so the selected seconds match the displayed cursor period, while preserving the circular cursor behavior and retaining late samples when incoming chunks exceed the selected window.
+- 2026-05-11 [ltonin] **ros2neuro_visualizer**: Fixed the time-scope window duration so the selected seconds match the displayed cursor period, while preserving the circular cursor behavior, retaining late samples when incoming chunks exceed the selected window, processing incoming frames before redraw to avoid backlog, and reducing time-scope rendering cost with an incremental pixmap trace layer, polyline drawing, and finite-value guards.
 - 2026-05-06 [ltonin] **ros2neuro_acquisition_gusbamp**: Updated g.USBamp reads for the new `libgusbampapi` byte-based `GT_GetSamplesAvailable`/`GT_GetData` contract and kept the C API private to the plugin implementation.
 - 2026-05-06 [ltonin] **ros2neuro_acquisition_eegdev**: Hardened libeegdev discovery against stale CMake cache paths and kept libeegdev/dl link details out of the exported plugin interface.
 - 2026-05-06 [ltonin] **ros2neuro_training_qt**: Added channel management inside the Channel layout view with editable labels, g.USBamp motor imagery presets, reset controls, channel-count summary, disabled-channel rendering, row-level compatibility coloring/tooltips, and propagation of active labels into the training config.
