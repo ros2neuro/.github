@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/ros2neuro/.github/main/profile/logo.png" alt="ros2neuro logo" width="220">
+  <img src="https://raw.githubusercontent.com/ros2neuro/.github/main/profile/logo.png" alt="ROS2neuro logo" width="480">
 </p>
 
 # ros2neuro: Closed-Loop Brain–Computer Interfaces with Modular ROS 2 Components
@@ -22,7 +22,7 @@ ros2neuro is designed first of all for endogenous BCIs (e.g. motor imagery) and 
 
 ## 1. Installation
 
-ros2neuro is distributed as Debian packages for **Ubuntu 24.04 (noble) + ROS 2 Jazzy**. [ROS 2 Jazzy](https://docs.ros.org/en/jazzy/Installation.html) must already be installed.
+ros2neuro is distributed as Debian packages for **Ubuntu 24.04 (noble) + ROS 2 Jazzy**. [ROS 2 Jazzy](https://docs.ros.org/en/jazzy/Installation.html) must already be installed. On any other Linux, or to try it without touching your system, use the [Docker / Podman / Distrobox image (section 1.6)](#16-docker-podman-or-distrobox-any-linux).
 
 ### 1.1 Setup your keys
 Setup your computer to accept software signed by ros2neuro.github.io:
@@ -60,7 +60,47 @@ ros2 launch ros2neuro_acquisition_dummy dummy_acquisition.launch.py
 ```
 The [hardware-free tutorial](https://ros2neuro.github.io/docs/tutorials/hardware-free-pipeline/) replays an EEG recording through a complete motor-imagery chain, from the acquisition to the wheel or bar feedback.
 
-### (1.6 Alternative installation)
+### 1.6 Docker, Podman or Distrobox (any Linux)
+If you are not on Ubuntu 24.04, or you just want to try ros2neuro without touching your system, build an image with Ubuntu 24.04, ROS 2 Jazzy and ros2neuro already installed from the PPA. The [`Dockerfile`](https://github.com/ros2neuro/ppa/blob/main/docker/Dockerfile) is in the [`ppa`](https://github.com/ros2neuro/ppa) repository. It works with Docker and with Podman (replace `docker` with `podman`); amd64 only.
+```bash
+git clone https://github.com/ros2neuro/ppa.git
+docker build -t ros2neuro ppa/docker/
+```
+Run the dummy acquisition (no hardware, no window) and look at its data from a second terminal:
+```bash
+docker run -it --rm --name ros2neuro ros2neuro ros2 launch ros2neuro_acquisition_dummy dummy_acquisition.launch.py
+
+# second terminal
+docker exec -it ros2neuro bash -c 'source /opt/ros/jazzy/setup.bash && ros2 topic hz /acquisition/neurodata'   # ~16 Hz
+```
+Run the whole chain on a recorded GDF and open the feedback window (the wheel; use `gaussian_bars` for the bars):
+```bash
+xhost +local:                                     # let the container open windows on your screen
+docker run -it --rm \
+    -e DISPLAY=$DISPLAY -e LIBGL_ALWAYS_SOFTWARE=1 -v /tmp/.X11-unix:/tmp/.X11-unix --network host \
+    ros2neuro ros2 launch ros2neuro_devel_test gaussian_wheel.launch.xml protocol:=calibration record:=false
+xhost -local:                                     # when you are done
+```
+Notes:
+* `LIBGL_ALWAYS_SOFTWARE=1` draws with the CPU and works everywhere. With a GPU you can add `--device /dev/dri` and drop it; with NVIDIA and the NVIDIA Container Toolkit use `--gpus all -e NVIDIA_DRIVER_CAPABILITIES=graphics,utility`.
+* To keep the recordings, mount a folder and pass it to the launcher: `-v $HOME/recordings:/home/ubuntu/recordings` and `record:=true recordings_dir:=/home/ubuntu/recordings`.
+* A real amplifier needs its device inside the container (`--device /dev/ttyUSB0`, ...); an LSL stream from another machine needs `--network host`. If Fast DDS complains about shared memory when nodes run in different containers, add `--ipc=host` to all of them.
+
+**With Distrobox.** [Distrobox](https://distrobox.it/) shares your screen, home folder and devices with the container, so no `xhost` or `-v` options are needed. Create the container from the same image: Distrobox uses Podman when it is installed (Docker otherwise), so build the image with the same engine.
+```bash
+git clone https://github.com/ros2neuro/ppa.git
+podman build -t ros2neuro_ppa ppa/docker/                                  # or: docker build ...
+distrobox create --name ros2neuro_ppa --image localhost/ros2neuro_ppa      # first start takes a minute
+distrobox enter ros2neuro_ppa
+
+# inside the container
+source /opt/ros/jazzy/setup.bash
+ros2 launch ros2neuro_acquisition_dummy dummy_acquisition.launch.py
+ros2 launch ros2neuro_devel_test gaussian_wheel.launch.xml protocol:=calibration record:=false
+```
+A "problem setting up the user ... trying manual addition" message on the first start is normal with older Distrobox versions (tested with 1.4.1). Your home folder is shared with the host: do not `source` another ROS 2 workspace inside the container. Remove the container with `distrobox rm -f ros2neuro_ppa`.
+
+### 1.7 Build from source
 Clone the repositories of this organization in the `src/` folder of a colcon workspace (`neurodraw` too: it is plain CMake) and run `colcon build`.
 
 ---
