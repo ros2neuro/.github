@@ -101,7 +101,7 @@ for r in \
     ros2neuro_filters_flattop ros2neuro_filters_hamming ros2neuro_filters_hann \
     ros2neuro_processing_spectral ros2neuro_processing_buffer ros2neuro_decoder \
     ros2neuro_decoder_lda ros2neuro_decoder_qda ros2neuro_decoder_svm \
-    ros2neuro_decoder_gaussian ros2neuro_decoder_py ros2neuro_decoder_converters \
+    ros2neuro_decoder_gaussian ros2neuro_decoder_sklearn ros2neuro_decoder_braindecode ros2neuro_decoder_py ros2neuro_decoder_converters \
     ros2neuro_integrator ros2neuro_integrator_exponential ros2neuro_integrator_buffer \
     ros2neuro_control ros2neuro_control_feedback ros2neuro_manager \
     ros2neuro_manager_synchronous ros2neuro_manager_asynchronous ros2neuro_feedback \
@@ -135,43 +135,36 @@ The [hardware-free tutorial](https://ros2neuro.github.io/docs/tutorials/hardware
 
 A closed-loop BCI is a distributed real-time system: neural samples are acquired, filtered, decoded and accumulated into a command while a person watches a feedback and an experimental protocol (calibration, evaluation, control) runs. ros2neuro implements every step of this loop as a separate node, so each research group can replace or add a single component (a new amplifier, a new decoder, a new feedback, a robot) without touching the rest. It is designed first of all for endogenous BCIs (e.g. motor imagery) and for continuous, self-paced control of assistive devices such as wheelchairs and telepresence robots.
 
-![ros2neuro closed loop](https://raw.githubusercontent.com/ros2neuro/.github/main/profile/ros2neuro_loop.png)
+![The ros2neuro loop](https://raw.githubusercontent.com/ros2neuro/.github/main/profile/fig_loop.png)
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/ros2neuro/.github/main/profile/ros2neuro_wheelchair.png" alt="ros2neuro BMI driving a wheelchair" width="480">
 </p>
 
-The four figures below go from the simplest view to the most detailed one. They are explained in the [architecture page](https://ros2neuro.github.io/docs/concepts/architecture/) of the documentation.
+### The loop
 
-### The big picture
+The **signal chain** (acquisition → filter chain → features → decoder → integrator, the top row) turns the amplifier signal into class probabilities. **Control** decides what to do with them (thresholds, outcome of a trial, reset of the integrator) and sends the values to the **feedback**, which the subject sees: that closes the loop. The **manager** runs the trials of an experiment and writes their phases on an event bus (the hatched frame), where the control and the feedback also talk and from which the recorder stores everything next to the signal. The dashed boxes are extensions that are not part of the stack: the *Robot Control* is **your** plugin, a second control that takes the same predictions and drives a robot. The loop is explained in the [architecture page](https://ros2neuro.github.io/docs/concepts/architecture/) of the documentation.
 
-The **signal chain** (acquisition → filters → processing → decoder → integrator) turns the amplifier signal into class probabilities. **Control** decides what to do with them (thresholds, outcome of a trial, reset of the integrator) and publishes the signal that drives the **feedback**; the **manager** runs the trials of an experiment and writes their phases on an event bus; the recorder and the visualizer only listen.
+Two rules are worth knowing. Only two kinds of service call exist, the acquisition services (`start`, `stop`, `quit`) and the integrator **reset** that control asks for: there are no ROS actions. And every node reads **its own parameters**; what several nodes share (the classes, the ids of the events, the thresholds) is one global `/**` section of the parameter file that each of them loads, and no node asks another for a parameter ([protocols](https://ros2neuro.github.io/docs/concepts/protocols/), [shared parameters](https://ros2neuro.github.io/docs/concepts/shared-parameters/)).
 
-![ros2neuro overview](https://raw.githubusercontent.com/ros2neuro/.github/main/profile/ros2neuro_1_overview.png)
+### The plugins
 
-### Topics, messages and plugins
+Each colour is a **family**: a package that defines a base class and a generic node, and under it the plugins available (amplifiers, filters, decoders, integrators, recorders, control, protocols, drawings). Each plugin is a separate package that registers against the base class and is chosen at run time by a parameter. The classes and their pluginlib ids are in the [plugins page](https://ros2neuro.github.io/docs/concepts/plugins/).
 
-Every package that has plugins lists them (amplifiers, filters, decoders, integrators, protocols, drawings...) and every arrow carries one **topic** and one **message type**. The event bus `/neuroevent` links the manager, control, the feedback and the recorder. The dashed plugin in `ros2neuro_control` is where **your** code goes to connect a robot. [Messages](https://ros2neuro.github.io/docs/concepts/messages/), [topics](https://ros2neuro.github.io/docs/concepts/topics/) and [plugins](https://ros2neuro.github.io/docs/concepts/plugins/) are described in the documentation.
+![ros2neuro plugin families](https://raw.githubusercontent.com/ros2neuro/.github/main/profile/fig_plugins.png)
 
-![ros2neuro topics and plugins](https://raw.githubusercontent.com/ros2neuro/.github/main/profile/ros2neuro_2_topics.png)
+| Family | Parent class | Plugin classes |
+|---|---|---|
+| acquisition | `ros2neuro::acquisition::NeuroDevice` | `DummyDevice`, `LSLDevice`, `EGDDevice`, `EEGODevice`, `GUSBampDevice`, `XDFDevice` |
+| filters | `ros2neuro::filters::Filter<float>` | `DcFloat`, `ButterworthFloat`, `CarFloat`, `LaplacianFloat`, `HannFloat`, `HammingFloat`, `BlackmanFloat`, `FlattopFloat` (instances of the templates `Dc<T>`, ...) |
+| decoder | `ros2neuro::decoder::Decoder` | `Gaussian`, `LDA`, `QDA`, `SVM`, `Sklearn`, `Braindecode` |
+| integrator | `ros2neuro::integrator::Integrator` | `Exponential`, `Buffer` |
+| recorder | `ros2neuro::recorder::NeuroRecorder` | `XDFRecorder` |
+| control | `ros2neuro::control::Control` | `ros2neuro::control::Feedback` |
+| manager | `ros2neuro::manager::Manager` | `Synchronous`, `Asynchronous` |
+| feedback | `ros2neuro::feedback::Feedback` | `Wheel`, `Bar` |
 
-### Services
-
-Only two kinds of service call exist: starting and stopping the acquisition, and the integrator **reset** that control asks for. There are no ROS actions, and no node asks another node for its parameters.
-
-![ros2neuro services](https://raw.githubusercontent.com/ros2neuro/.github/main/profile/ros2neuro_3_services.png)
-
-### Parameters
-
-Every node reads **its own parameters**. What several nodes share (the classes, the ids of the events, the thresholds) is one global `/**` section of the parameter file that each of them loads: see [protocols](https://ros2neuro.github.io/docs/concepts/protocols/) and [shared parameters](https://ros2neuro.github.io/docs/concepts/shared-parameters/).
-
-![ros2neuro parameters](https://raw.githubusercontent.com/ros2neuro/.github/main/profile/ros2neuro_4_parameters.png)
-
-### Extension points
-
-Each base class (acquisition device, filter, decoder, integrator, control, protocol, feedback) is defined by a package, and each implementation is a separate package that registers against it as a plugin and is chosen at run time by a parameter.
-
-![ros2neuro extension points](https://raw.githubusercontent.com/ros2neuro/.github/main/profile/ros2neuro_plugins.png)
+Parent and plugins share the namespace `ros2neuro::<family>`.
 
 ---
 
@@ -218,7 +211,9 @@ Every package is a separate repository. Details, parameters and topics of each o
 - [**ros2neuro_decoder_qda**](https://github.com/ros2neuro/ros2neuro_decoder_qda) Decoder plugin for QDA
 - [**ros2neuro_decoder_svm**](https://github.com/ros2neuro/ros2neuro_decoder_svm) Decoder plugin for SVM
 - [**ros2neuro_decoder_gaussian**](https://github.com/ros2neuro/ros2neuro_decoder_gaussian) Decoder plugin for Gaussian classifier
-- [**ros2neuro_decoder_py**](https://github.com/ros2neuro/ros2neuro_decoder_py) Python decoder for deep-learning models
+- [**ros2neuro_decoder_sklearn**](https://github.com/ros2neuro/ros2neuro_decoder_sklearn) Decoder plugin for scikit-learn models (skops)
+- [**ros2neuro_decoder_braindecode**](https://github.com/ros2neuro/ros2neuro_decoder_braindecode) Decoder plugin for deep-learning models of braindecode (PyTorch)
+- [**ros2neuro_decoder_py**](https://github.com/ros2neuro/ros2neuro_decoder_py) Python decoder node for deep-learning models
 - [**ros2neuro_decoder_converters**](https://github.com/ros2neuro/ros2neuro_decoder_converters) Converters from Matlab decoders to `.r2nd`
 - [**ros2neuro_integrator**](https://github.com/ros2neuro/ros2neuro_integrator) Generic interface for evidence accumulation
 - [**ros2neuro_integrator_exponential**](https://github.com/ros2neuro/ros2neuro_integrator_exponential) Integrator plugin for exponential smoothing
