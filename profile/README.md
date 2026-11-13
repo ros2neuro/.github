@@ -12,7 +12,8 @@
 
 ## 1. Installation
 
-There are three ways to get ros2neuro. Everything was built and tested on **Ubuntu 24.04 (noble) + ROS 2 Jazzy**.
+There are three ways to get ros2neuro. Everything was built and tested on **Ubuntu 24.04 (noble) + ROS 2 Jazzy**. With apt or from
+source, the two decoders that run Python models (scikit-learn, braindecode) also need a few Python libraries: see [1.4](#14-python-libraries-for-the-scikit-learn-and-braindecode-decoders-optional).
 
 | | Way | Use it when |
 |---|---|---|
@@ -101,7 +102,7 @@ for r in \
     ros2neuro_filters_flattop ros2neuro_filters_hamming ros2neuro_filters_hann \
     ros2neuro_processing_spectral ros2neuro_processing_buffer ros2neuro_decoder \
     ros2neuro_decoder_lda ros2neuro_decoder_qda ros2neuro_decoder_svm \
-    ros2neuro_decoder_gaussian ros2neuro_decoder_sklearn ros2neuro_decoder_braindecode ros2neuro_decoder_py ros2neuro_decoder_converters \
+    ros2neuro_decoder_gaussian ros2neuro_decoder_sklearn ros2neuro_decoder_braindecode ros2neuro_decoder_converters \
     ros2neuro_integrator ros2neuro_integrator_exponential ros2neuro_integrator_buffer \
     ros2neuro_control ros2neuro_control_feedback ros2neuro_manager \
     ros2neuro_manager_synchronous ros2neuro_manager_asynchronous ros2neuro_feedback \
@@ -118,6 +119,39 @@ source install/setup.bash
 * `neurodraw` (the graphics library of the feedback) is plain CMake: `colcon` builds it first.
 * The acquisition plugins for a proprietary SDK (`ros2neuro_acquisition_antneuro`, `ros2neuro_acquisition_gusbamp`) need the SDK installed: skip them with `colcon build --packages-skip ros2neuro_acquisition_antneuro ros2neuro_acquisition_gusbamp`.
 * A workspace sourced **after** `/opt/ros/jazzy` overlays the installed packages: install from apt and rebuild only the package you work on.
+
+### 1.4 Python libraries for the scikit-learn and braindecode decoders (optional)
+
+**Required: nothing more than the packages above.** The whole stack (acquisition, filters, spectral processing, the LDA / QDA / SVM /
+Gaussian decoders, integrators, control, manager, feedback, recorder, visualizer, the hardware-free launchers) runs with what apt installs.
+
+**Optional: only to use a model made in Python.** Two decoder plugins run their model in Python, inside the decoder node, and need
+libraries that are not Debian packages (or not in the version the models need):
+
+| To use | You need (pip) | Its list |
+|---|---|---|
+| `ros2neuro_decoder_sklearn` (scikit-learn models, `.skops`) | `scikit-learn` (the version the model was saved with: the examples use 1.9.0), `skops` | `/opt/ros/jazzy/share/ros2neuro_decoder_sklearn/requirements.txt` |
+| `ros2neuro_decoder_braindecode` (braindecode / PyTorch models) | `torch` (CPU or CUDA), `braindecode` | `/opt/ros/jazzy/share/ros2neuro_decoder_braindecode/requirements.txt` |
+
+The plugins use the **system Python** (it runs inside the C++ decoder node): the libraries must be visible to it. Activating a virtual
+environment is not enough. Two ways work:
+
+```bash
+# A) in your user folder (~/.local): the simplest. --break-system-packages is needed on Ubuntu 24.04 (PEP 668); with --user it
+#    only writes in your home, the system is not touched.
+pip install --user --break-system-packages -r /opt/ros/jazzy/share/ros2neuro_decoder_sklearn/requirements.txt
+pip install --user --break-system-packages --extra-index-url https://download.pytorch.org/whl/cpu \
+    -r /opt/ros/jazzy/share/ros2neuro_decoder_braindecode/requirements.txt      # CPU torch; drop --extra-index-url for CUDA
+
+# B) in a virtual environment, made visible with PYTHONPATH (sudo apt install python3-venv first)
+python3 -m venv ~/ros2neuro_py
+~/ros2neuro_py/bin/pip install -r /opt/ros/jazzy/share/ros2neuro_decoder_sklearn/requirements.txt
+export PYTHONPATH=~/ros2neuro_py/lib/python3.12/site-packages:$PYTHONPATH     # in every terminal that launches the decoder
+```
+
+Check: `python3 -c "import sklearn, skops, torch, braindecode"`. Without them the two plugins stop at start with an error that names the
+missing module (exit code 1); the rest of the stack is not affected. The requirements pin `numpy` 2.x: it shadows the system one, which some
+ROS Python packages compiled against numpy 1.x (e.g. `cv_bridge`) do not like; ros2neuro is not affected. The **Docker image** (1.2) has all of them already (torch CPU).
 
 ### Try it
 
@@ -213,7 +247,6 @@ Every package is a separate repository. Details, parameters and topics of each o
 - [**ros2neuro_decoder_gaussian**](https://github.com/ros2neuro/ros2neuro_decoder_gaussian) Decoder plugin for Gaussian classifier
 - [**ros2neuro_decoder_sklearn**](https://github.com/ros2neuro/ros2neuro_decoder_sklearn) Decoder plugin for scikit-learn models (skops)
 - [**ros2neuro_decoder_braindecode**](https://github.com/ros2neuro/ros2neuro_decoder_braindecode) Decoder plugin for deep-learning models of braindecode (PyTorch)
-- [**ros2neuro_decoder_py**](https://github.com/ros2neuro/ros2neuro_decoder_py) Python decoder node for deep-learning models
 - [**ros2neuro_decoder_converters**](https://github.com/ros2neuro/ros2neuro_decoder_converters) Converters from Matlab decoders to `.r2nd`
 - [**ros2neuro_integrator**](https://github.com/ros2neuro/ros2neuro_integrator) Generic interface for evidence accumulation
 - [**ros2neuro_integrator_exponential**](https://github.com/ros2neuro/ros2neuro_integrator_exponential) Integrator plugin for exponential smoothing
